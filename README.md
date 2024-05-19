@@ -1,27 +1,37 @@
-Si consideri il dataset Daily Historical Stock Prices, scaricabile da Kaggle (https://www.kaggle.com/) all’indirizzo https://www.kaggle.com/datasets/ehallmar/daily-historical-stock-prices-1970-2018. Esso contiene l’andamento giornaliero di una selezione di azioni sulla borsa di New York (NYSE) e sul NASDAQ dal 1970 al 2018. Il dataset è formato da due file CSV.
-Il primo (historical_stock_prices) ha i seguenti campi:
-• ticker: simbolo univoco dell’azione (https://en.wikipedia.org/wiki/Ticker_symbol)
-• open: prezzo di apertura
-• close: prezzo di chiusura
-• adj_close: prezzo di chiusura “modificato” (potete trascurarlo)
-• low: prezzo minimo
-• high: prezzo massimo
-• volume: numero di transazioni
-• date: data nel formato aaaa-mm-gg
-Il secondo (historical_stocks) ha invece questi campi:
-• ticker: simbolo dell’azione
-• exchange: NYSE o NASDAQ
-• name: nome dell’azienda
-• sector: settore dell’azienda (per esempio “technology”)
-• industry: industria di riferimento per l’azienda (per esempio “semiconductors”)
-Dopo avere preparato opportunamente il dataset (per esempio eliminando dati errati o non significativi), progettare e realizzare almeno due delle seguenti applicazioni in almeno tre tra le seguenti tecnologie: MapReduce, Hive, Spark core e Spark SQL:
-1. Un job che sia in grado di generare le statistiche di ciascuna azione dall’anno in cui è entrata in borsa indicando, per ogni azione: (a) il simbolo, (b) il nome dell’azienda, (c) una lista con l’andamento dell’azione in ciascun anno della presenza dell’azione in borsa indicando, per ogni anno: (i) la variazione percentuale della quotazione nell’anno (differenza percentuale arrotondata tra il primo prezzo di chiusura e l’ultimo prezzo di chiusura dell’anno), (ii) il prezzo minimo nell’anno, (iii) quello massimo nell’anno e (iv) il volume medio dell’anno.
-2. Un job che sia in grado di generare un report contenente, per ciascun’industria e per ciascun anno: (a) la variazione percentuale della quotazione dell’industria1 nell’anno, (b) l’azione dell’industria che ha avuto il maggior incremento percentuale nell’anno (con indicazione dell’incremento) e (c) l’azione dell’industria che ha avuto il maggior volume di transazioni nell’anno (con indicazione del volume). Nel report le industrie devono essere raggruppate per settore e ordinate per ordine decrescente di variazione percentuale.
-3. Un job in grado di generare gruppi di aziende le cui azioni hanno avuto lo stesso trend in termini di variazione annuale per almeno tre anni consecutivi a partire dal 2000, indicando le aziende e il trend comune (es. {Apple, Intel, Amazon}: 2011:-1%, 2012:+3%, 2013:+5%).
-Per ciascun job bisogna illustrare e documentare in un rapporto finale:
-• Le operazioni di preparazione dei dati che sono state eventualmente effettuate
-• Una possibile implementazione MapReduce (pseudocodice), Hive, Spark core (pseudocodice) e SparkSQL.
-• Le prime 10 righe dei risultati dei vari job.
-• Tabella e grafici di confronto dei tempi di esecuzione in locale e su cluster dei vari job con dimensioni crescenti dell’input2.
-• Il relativo codice completo MapReduce e Spark (basta un link a un repository ad accesso libero).
-Tutte le specifiche non definite in questo documento possono essere scelte liberamente.
+# Analisi Storica Giornaliera dei Prezzi delle Azioni
+
+Questo progetto si concentra sull'analisi dei dati storici giornalieri dei prezzi delle azioni dalla Borsa di New York (NYSE) e dal NASDAQ, che spaziano dal 1970 al 2018. Il dataset è composto da due file CSV:
+
+1. `historical_stock_prices.csv`: Contiene informazioni giornaliere sui prezzi delle azioni, inclusi i prezzi di apertura, chiusura, minimi, massimi, il volume e la data.
+2. `historical_stocks.csv`: Contiene dettagli su ciascuna azione, inclusi il simbolo, la borsa, il nome dell'azienda, il settore e l'industria.
+
+## Preparazione dei Dati
+- Pulizia dei dati mediante rimozione di voci errate o non pertinenti.
+- Gestione dei valori mancanti, se presenti.
+- Garanzia di coerenza e correttezza dei dati.
+
+## Applicazioni Implementate
+1. **Statistiche sulle Prestazioni delle Azioni per Anno**
+   - Generazione di statistiche per ogni azione, incluse il simbolo, il nome dell'azienda e le metriche di prestazione annuale come la variazione percentuale, il prezzo minimo, il prezzo massimo e il volume medio.
+   - Implementato in MapReduce, Hive, Spark Core e Spark SQL.
+
+2. **Analisi per Settore Industriale**
+   - Produzione di un rapporto dettagliato sulla variazione percentuale, l'azione più performante e l'azione con il volume di transazioni più alto per ogni industria annualmente.
+   - Le industrie sono raggruppate per settore e ordinate per variazione percentuale.
+   - Implementato in MapReduce, Hive, Spark Core e Spark SQL.
+
+3. **Identificazione di Aziende con Trend Simili**
+   - Identificazione di gruppi di aziende le cui azioni hanno mostrato trend annuali simili per almeno tre anni consecutivi a partire dal 2000.
+   - Presentazione delle aziende insieme al loro trend comune per ogni anno.
+   - Implementato in MapReduce, Hive, Spark Core e Spark SQL.
+
+## Contenuti del Rapporto
+Per ciascuna applicazione, il rapporto finale include:
+- Passaggi di preparazione dei dati.
+- Pseudocodice per le implementazioni MapReduce e Spark Core.
+- Le prime 10 righe dei risultati.
+- Tabella di confronto e grafici che illustrano i tempi di esecuzione su ambiente locale e cluster con dimensioni di input crescenti.
+- Collegamenti ai repository completi del codice per le implementazioni MapReduce e Spark.
+
+Per ulteriori dettagli, fare riferimento alla documentazione individuale fornita nei rispettivi repository.
+
