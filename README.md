@@ -32,6 +32,3 @@ Per ciascuna applicazione, il rapporto finale include:
 - Le prime 10 righe dei risultati.
 - Tabella di confronto e grafici che illustrano i tempi di esecuzione su ambiente locale e cluster con dimensioni di input crescenti.
 - Collegamenti ai repository completi del codice per le implementazioni MapReduce e Spark.
-
-Per ulteriori dettagli, fare riferimento alla documentazione individuale fornita nei rispettivi repository.
-
