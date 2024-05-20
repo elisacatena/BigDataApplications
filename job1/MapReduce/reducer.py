@@ -50,7 +50,7 @@ def print_statistics(ticker, year, data):
     max_price = data['max_price']
     avg_volume = data['total_volume'] / data['count']
     percent_change = ((last_close - first_close) / first_close) * 100
-    print(f"{ticker:<10}\t{year:<4}\t{percent_change:<16}\t{min_price:<16}\t{max_price:<16}\t{avg_volume:<16}")    
+    print(f"{ticker:<10}\t{year:<4}\t{percent_change:<16.2f}\t{min_price:<16}\t{max_price:<16}\t{avg_volume:<16}")    
     
 if __name__ == "__main__":
-    main()
+    main() 
