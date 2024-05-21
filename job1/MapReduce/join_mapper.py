@@ -4,26 +4,21 @@
 import sys
 import csv 
 
-def read_input(file):
-    for line in file:
-        yield line
-
 def main():
     for line in sys.stdin:
+        # print(line)
         # Usa il modulo csv per leggere la riga correttamente
         parts = list(csv.reader([line]))[0]
         if parts[0] == 'ticker':
             continue
         if len(parts) == 5:
-            if line[0] == 'ticker':
-                continue  # skip header
-            # This is a line from historical_stocks
+            # This is a line from historical_stocks.csv
             # Estrai i valori dei campi
-            ticker, exchange, name, sector, industry = parts
+            ticker, _, name, _, _ = parts
             # Stampa l'output nel formato desiderato
             print(f"{ticker}\tstock\t{name}")
         else:
-            # This is a line from stock_statistics
+            # This is a line from stock_statistics.txt
             parts = line.strip().split("\t")
             if len(parts) >= 6:
                 ticker = parts[0]

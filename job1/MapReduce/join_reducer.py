@@ -28,7 +28,10 @@ def main():
         name = stocks_data.get(ticker, "Unknown")
         for stat in stats:
             year, percent_change, min_price, max_price, avg_volume = stat
-            print("{:<10}\t{:<50}\t{:<4}\t{:<16}\t{:<16}\t{:<16}\t{:<16}".format(ticker, name, year, percent_change, min_price, max_price, avg_volume))
+            min_price = float(min_price)
+            max_price = float(max_price)
+            avg_volume = float(avg_volume)
+            print("{:<10}\t{:<50}\t{:<4}\t{:<16}\t{:<16.2f}\t{:<16.2f}\t{:<16.2f}".format(ticker, name, year, percent_change, min_price, max_price, avg_volume))
             # print(f"{ticker}\t{name}\t{year}\t{percent_change}\t{min_price}\t{max_price}\t{avg_volume}")
 
 if __name__ == "__main__":
