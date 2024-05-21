@@ -1,4 +1,4 @@
-# Esecuzione primo job MapReduce (tempo impiegato circa 7min):
+# **Esecuzione primo job MapReduce (tempo impiegato circa 7min):**
 
 $HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/streaming/hadoop-streaming-3.3.4.jar \
     -input /user/elisacatena/input/historical_stock_prices.csv \
@@ -8,7 +8,7 @@ $HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/streaming/hadoop-streaming-3.3.4.jar \
     -file git/BigDataApplications/job1/MapReduce/mapper.py \
     -file git/BigDataApplications/job1/MapReduce/reducer.py 
 
-# Esecuzione secondo job MapReduce (tempo impiegato circa 6sec):
+# **Esecuzione secondo job MapReduce (tempo impiegato circa 6sec):**
 
 $HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/streaming/hadoop-streaming-3.3.4.jar \
     -input /user/elisacatena/output/MapReduce/job1/stock_statistics\
