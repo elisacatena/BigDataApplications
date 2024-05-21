@@ -6,7 +6,7 @@ from collections import defaultdict
 
 def reducer():
     
-    print("{:<30}\t{:<4}\t{:<30}\t{:<35}\t{:<35}\t{:<30}".format("Sector", "Year", "Industry", "Industry price change %", "Max increase ticker (increase %)", "Max volume ticker (volume)"))
+    print("{:<30}\t{:<4}\t{:<30}\t{:<35}\t{:<35}\t{:<30}".format("Sector", "Year", "Industry", "Industry price change %", "Max increase ticker (increase %)", "Max volume ticker (volume %)"))
     
     # Dati strutturati come: { (sector, industry, year): { ticker: [total_volume, [close_prices]] } }
     industry_year_data = defaultdict(lambda: defaultdict(lambda: [0, []]))
