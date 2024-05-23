@@ -45,7 +45,7 @@ statistics = statistics.withColumnRenamed("ticker", "Ticker") \
 
 # Salvataggio del risultato su HDFS
 output_path = "hdfs://localhost:9000/user/elisacatena/output/Spark/job1/stock_statistics.csv"
-statistics.write.csv(output_path, header=True)
+statistics.coalesce(1).write.csv(output_path, header=True)
 
 # Arresto della sessione Spark
 spark.stop()
