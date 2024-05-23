@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+"""spark application"""
+
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, year, min, max, avg, first, last, round
 from pyspark.sql import Window
