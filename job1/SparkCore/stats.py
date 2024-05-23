@@ -15,14 +15,14 @@ stock_prices_path = "hdfs://localhost:9000/user/elisacatena/input/historical_sto
 stock_info_path = "hdfs://localhost:9000/user/elisacatena/input/historical_stocks1.csv"
 
 # Caricamento dei dati da HDFS
-stock_prices = spark.read.csv(stock_prices_path, header=True, inferSchema=True)
-stock_info = spark.read.csv(stock_info_path, header=True, inferSchema=True)
+historical_stock_prices = spark.read.csv(stock_prices_path, header=True, inferSchema=True)
+historical_stocks = spark.read.csv(stock_info_path, header=True, inferSchema=True)
 
 # Preprocessing
-stock_prices = stock_prices.withColumn("year", year(col("date")))
+historical_stock_prices = historical_stock_prices.withColumn("year", year(col("date")))
 
 # Unione dei dati
-data = stock_prices.join(stock_info, on="ticker")
+data = historical_stock_prices.join(historical_stocks, on="ticker")
 
 # Calcolo delle statistiche annuali per ogni azione
 window_spec = Window.partitionBy("ticker", "year").orderBy("date")
