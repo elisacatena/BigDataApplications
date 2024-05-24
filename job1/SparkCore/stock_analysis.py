@@ -4,6 +4,7 @@
 from datetime import datetime
 import argparse
 from pyspark.sql import SparkSession
+import csv
 
 def parse_line(line):
     fields = line.split(',')
@@ -53,5 +54,11 @@ output = stats_per_stock_per_year.map(lambda x: (x[0], x[1]))
 # Ordina l'output in base al ticker
 output_sorted = output.sortByKey()
 
+# Converti l'output in una lista di righe CSV
+output_csv = output_sorted.map(lambda x: ','.join(map(str, x)))
+
+# Salva l'output in un file CSV
+output_csv.saveAsTextFile(output_filepath)
+        
 # Riduci il numero di partizioni a 1 prima di salvare l'output
 output_sorted.coalesce(1).saveAsTextFile(output_filepath)
