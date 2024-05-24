@@ -1,6 +1,5 @@
 -- Drop existing tables if they exist
-DROP TABLE IF EXISTS historical_stocks;
-DROP TABLE IF EXISTS historical_stock_prices;
+DROP TABLE IF EXISTS merged_data;
 DROP TABLE IF EXISTS massimo_volume;
 DROP TABLE IF EXISTS close_sums_temp;
 DROP TABLE IF EXISTS variazione_percentuale_temp;
@@ -9,29 +8,17 @@ DROP TABLE IF EXISTS massimo_incremento_percentuale;
 DROP TABLE IF EXISTS report_finale_job2;
 
 -- Create the table for historical stock prices data
-CREATE TABLE IF NOT EXISTS historical_stock_prices (
-    `azione` STRING,
+CREATE TABLE IF NOT EXISTS merged_data (
+    `ticker` STRING,
     `open` FLOAT,
     `close` FLOAT,
     `adj_close` FLOAT,
     `low` FLOAT,
     `high` FLOAT,
     `volume` INT,
-    `data` DATE
-)
-ROW FORMAT DELIMITED
-FIELDS TERMINATED BY ','
-STORED AS TEXTFILE
-tblproperties("skip.header.line.count"="1");
-
--- Load historical stock prices data
-LOAD DATA INPATH 'hdfs:///user/hive/warehouse/input/historical_stock_prices1.csv' OVERWRITE INTO TABLE historical_stock_prices;
-
--- Create the table for stock information
-CREATE TABLE IF NOT EXISTS historical_stocks (
-    `azione` STRING,
+    `data` DATE,
     `exchange` STRING,
-    `nome` STRING,
+    `name` STRING,
     `sector` STRING,
     `industry` STRING
 )
@@ -43,49 +30,44 @@ WITH SERDEPROPERTIES (
 STORED AS TEXTFILE
 tblproperties("skip.header.line.count"="1");
 
--- Load stock information data
-LOAD DATA INPATH 'hdfs:///user/hive/warehouse/input/historical_stocks1.csv' OVERWRITE INTO TABLE historical_stocks;
+-- Load historical stock prices data
+LOAD DATA INPATH 'hdfs:///user/hive/warehouse/input/merged_data1.csv' OVERWRITE INTO TABLE merged_data;
 
--- Identificare l'azione dell’industria con il maggior volume di transazioni nell’anno
+-- Create massimo_volume table to identify tickers with the highest volume for each industry and year
 CREATE TABLE IF NOT EXISTS massimo_volume AS
 SELECT
-    x.industry,
-    x.anno,
-    x.azione AS azione_massimo_volume,
-    x.volume_transazioni
+    sector,
+    industry,
+    anno,
+    azione_massimo_volume,
+    volume_transazioni
 FROM (
     SELECT
-        h.industry,
-        YEAR(p.data) AS anno,
-        p.azione,
-        SUM(p.volume) AS volume_transazioni,
-        ROW_NUMBER() OVER(PARTITION BY h.industry, YEAR(p.data) ORDER BY SUM(p.volume) DESC) AS row_num
+        sector,
+        industry,
+        YEAR(data) AS anno,
+        ticker AS azione_massimo_volume,
+        SUM(volume) AS volume_transazioni,
+        ROW_NUMBER() OVER (PARTITION BY sector, industry, YEAR(data) ORDER BY SUM(volume) DESC) AS row_num
     FROM
-        historical_stocks h
-    JOIN
-        historical_stock_prices p
-    ON
-        h.azione = p.azione
+        merged_data
     GROUP BY
-        h.industry, YEAR(p.data), p.azione
-) x
+        sector, industry, YEAR(data), ticker
+) ranked
 WHERE
-    x.row_num = 1;
+    row_num = 1;
 
 -- Calcolare la somma dei primi e degli ultimi prezzi di chiusura per ogni azione di ogni industria in ogni anno
 CREATE TABLE IF NOT EXISTS close_sums_temp AS
 SELECT
-    h.industry,
-    YEAR(p.data) AS anno,
-    p.azione,
-    FIRST_VALUE(p.close) OVER (PARTITION BY h.industry, YEAR(p.data), p.azione ORDER BY p.data) AS first_close,
-    LAST_VALUE(p.close) OVER (PARTITION BY h.industry, YEAR(p.data), p.azione ORDER BY p.data ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_close
+    industry,
+    ticker,
+    YEAR(data) AS anno,
+    ticker AS azione,
+    FIRST_VALUE(close) OVER (PARTITION BY industry, YEAR(data), ticker ORDER BY data) AS first_close,
+    LAST_VALUE(close) OVER (PARTITION BY industry, YEAR(data), ticker ORDER BY data ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_close
 FROM
-    historical_stocks h
-JOIN
-    historical_stock_prices p
-ON
-    h.azione = p.azione;
+    merged_data;
 
 -- Calcolare la variazione percentuale
 CREATE TABLE IF NOT EXISTS variazione_percentuale_temp AS
@@ -102,8 +84,8 @@ GROUP BY
 CREATE TABLE IF NOT EXISTS incremento_percentuale_azione AS
 SELECT
     industry,
+    ticker,
     anno,
-    azione,
     ROUND((last_close - first_close) / first_close * 100, 2) AS incremento_percentuale
 FROM
     close_sums_temp;
@@ -111,59 +93,51 @@ FROM
 -- Identificare l'azione dell'industria con il maggior incremento percentuale nell'anno
 CREATE TABLE IF NOT EXISTS massimo_incremento_percentuale AS
 SELECT
-    x.industry,
-    x.anno,
-    x.azione AS azione_massimo_incremento,
-    x.incremento_percentuale
+    industry,
+    anno,
+    ticker,
+    incremento_percentuale
 FROM (
     SELECT
-        ipa.industry,
-        ipa.anno,
-        ipa.azione,
-        ipa.incremento_percentuale,
-        ROW_NUMBER() OVER(PARTITION BY ipa.industry, ipa.anno ORDER BY ipa.incremento_percentuale DESC) AS row_num
+        industry,
+        anno,
+        ticker,
+        incremento_percentuale,
+        ROW_NUMBER() OVER(PARTITION BY industry, anno ORDER BY incremento_percentuale DESC) AS row_num
     FROM
-        incremento_percentuale_azione ipa
+        incremento_percentuale_azione
 ) x
 WHERE
-    x.row_num = 1;
+    row_num = 1;
 
 -- Creare il report finale
 CREATE TABLE IF NOT EXISTS report_finale_job2 AS
-SELECT DISTINCT
-    hs.sector,
+SELECT
+    mv.sector,
     mv.anno,
     mv.industry,
     vp.variazione_percentuale,
-    mip.azione_massimo_incremento AS azione_maggior_incremento,
-    mip.incremento_percentuale AS maggior_incremento_percentuale,
-    mv.azione_massimo_volume AS azione_maggior_volume,
-    mv.volume_transazioni AS maggior_volume
+    mip.ticker AS azione_massimo_incremento,
+    mip.incremento_percentuale AS incremento_percentuale,
+    mv.azione_massimo_volume AS azione_massimo_volume,
+    mv.volume_transazioni AS volume_transazioni
 FROM
     massimo_volume mv
 JOIN
-    historical_stocks hs
-ON
-    mv.industry = hs.industry
-JOIN
     variazione_percentuale_temp vp
-ON
-    mv.industry = vp.industry
-    AND mv.anno = vp.anno
+ON 
+    mv.industry = vp.industry AND mv.anno = vp.anno
 JOIN
-    massimo_incremento_percentuale mip
+    massimo_incremento_percentuale mip 
 ON
-    mv.industry = mip.industry
-    AND mv.anno = mip.anno
+    mip.industry = vp.industry AND mip.anno = vp.anno
 ORDER BY
-    hs.sector,
-    vp.variazione_percentuale DESC;
+    mv.sector, incremento_percentuale DESC;
 
 -- Drop temporary tables
-DROP TABLE IF EXISTS historical_stocks;
-DROP TABLE IF EXISTS historical_stock_prices;
-DROP TABLE IF EXISTS massimo_volume;
-DROP TABLE IF EXISTS close_sums_temp;
-DROP TABLE IF EXISTS variazione_percentuale_temp;
-DROP TABLE IF EXISTS incremento_percentuale_azione;
-DROP TABLE IF EXISTS massimo_incremento_percentuale;
+-- DROP TABLE IF EXISTS merged_data;
+-- DROP TABLE IF EXISTS massimo_volume;
+-- DROP TABLE IF EXISTS close_sums_temp;
+-- DROP TABLE IF EXISTS variazione_percentuale_temp;
+-- DROP TABLE IF EXISTS incremento_percentuale_azione;
+-- DROP TABLE IF EXISTS massimo_incremento_percentuale;
