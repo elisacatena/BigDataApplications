@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS close_sums_temp;
 DROP TABLE IF EXISTS variazione_percentuale_temp;
 DROP TABLE IF EXISTS incremento_percentuale_azione;
 DROP TABLE IF EXISTS massimo_incremento_percentuale;
-DROP TABLE IF EXISTS report_finale_job2;
+DROP TABLE IF EXISTS report_finale_job2_1;
 
 -- Create the table for historical stock prices data
 CREATE TABLE IF NOT EXISTS merged_data (
@@ -111,7 +111,7 @@ WHERE
     row_num = 1;
 
 -- Creare il report finale
-CREATE TABLE IF NOT EXISTS report_finale_job2 AS
+CREATE TABLE IF NOT EXISTS report_finale_job2_1 AS
 SELECT
     mv.sector,
     mv.anno,
@@ -135,9 +135,9 @@ ORDER BY
     mv.sector, incremento_percentuale DESC;
 
 -- Drop temporary tables
--- DROP TABLE IF EXISTS merged_data;
--- DROP TABLE IF EXISTS massimo_volume;
--- DROP TABLE IF EXISTS close_sums_temp;
--- DROP TABLE IF EXISTS variazione_percentuale_temp;
--- DROP TABLE IF EXISTS incremento_percentuale_azione;
--- DROP TABLE IF EXISTS massimo_incremento_percentuale;
+DROP TABLE IF EXISTS merged_data;
+DROP TABLE IF EXISTS massimo_volume;
+DROP TABLE IF EXISTS close_sums_temp;
+DROP TABLE IF EXISTS variazione_percentuale_temp;
+DROP TABLE IF EXISTS incremento_percentuale_azione;
+DROP TABLE IF EXISTS massimo_incremento_percentuale;
