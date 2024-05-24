@@ -14,6 +14,7 @@ def main():
         if row[0] == 'ticker':
             continue  # skip header
         ticker = row[0]
+        name = row[9]
         date = row[7]
         year = datetime.strptime(date, "%Y-%m-%d").year
         close_price = float(row[2])
@@ -21,7 +22,7 @@ def main():
         high_price = float(row[5])
         volume = int(row[6])
         
-        print(f"{ticker:<10}\t{year:<4}\t{date:<10}\t{close_price:<16}\t{low_price:<16}\t{high_price:<16}\t{volume:<16}")
+        print(f"{ticker:<10}\t{name:<40}\t{year:<4}\t{date:<10}\t{close_price:<16}\t{low_price:<16}\t{high_price:<16}\t{volume:<16}")
 
 if __name__ == "__main__":
     main()

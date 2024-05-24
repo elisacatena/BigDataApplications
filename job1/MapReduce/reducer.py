@@ -10,7 +10,11 @@ def read_mapper_output(file):
         yield line.strip().split("\t")
 
 def main():
+    
+    print("{:<10}\t{:<40}\t{:<4}\t{:<16}\t{:<16}\t{:<16}\t{:<16}".format("Ticker", "Name", "Year", "Percent Change", "Min Price", "Max Price", "Avg Volume"))
+
     all_data = defaultdict(lambda: defaultdict(lambda: {
+        'name': "",
         'dates': [],
         'close_prices': {},
         'min_price': float('inf'),
@@ -20,7 +24,7 @@ def main():
     }))
 
     for tokens in read_mapper_output(sys.stdin):
-        ticker, year, date, close_price, low_price, high_price, volume = tokens
+        ticker, name, year, date, close_price, low_price, high_price, volume = tokens
         year = int(year)
         date = datetime.strptime(date, "%Y-%m-%d")
         close_price = float(close_price)
@@ -29,6 +33,7 @@ def main():
         volume = int(volume)
         
         data = all_data[ticker][year]
+        data['name'] = name
         data['dates'].append(date)
         data['close_prices'][date] = close_price
         data['min_price'] = min(data['min_price'], low_price)
@@ -41,6 +46,7 @@ def main():
             print_statistics(ticker, year, data)
 
 def print_statistics(ticker, year, data):
+    name = data['name']
     sorted_dates = sorted(data['dates'])
     first_date = sorted_dates[0]
     last_date = sorted_dates[-1]
@@ -50,7 +56,7 @@ def print_statistics(ticker, year, data):
     max_price = data['max_price']
     avg_volume = data['total_volume'] / data['count']
     percent_change = ((last_close - first_close) / first_close) * 100
-    print(f"{ticker:<10}\t{year:<4}\t{percent_change:<16.2f}\t{min_price:<16}\t{max_price:<16}\t{avg_volume:<16}")    
+    print("{:<10}\t{:<40}\t{:<4}\t{:<16.2f}\t{:<16.2f}\t{:<16.2f}\t{:<16.2f}".format(ticker, name, year, percent_change, min_price, max_price, avg_volume))
     
 if __name__ == "__main__":
     main() 
