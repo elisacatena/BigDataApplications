@@ -4,6 +4,10 @@
 import sys
 from collections import defaultdict
 
+def read_mapper_output(file):
+    for line in file:
+        yield line.strip().split("\t")
+        
 def reducer():
     
     print("{:<30}\t{:<4}\t{:<30}\t{:<35}\t{:<35}\t{:<30}".format("Sector", "Year", "Industry", "Industry price change %", "Max increase ticker (increase %)", "Max volume ticker (volume)"))
@@ -11,12 +15,9 @@ def reducer():
     # Dati strutturati come: { (sector, industry, year): { ticker: [total_volume, [close_prices]] } }
     industry_year_data = defaultdict(lambda: defaultdict(lambda: [0, []]))
 
-    for line in sys.stdin:
-        parts = line.strip().split("\t")
-        if len(parts) != 7:
-            continue
+    for tokens in read_mapper_output(sys.stdin):
 
-        sector, industry, year, date, ticker, close_price, volume = parts
+        sector, industry, year, date, ticker, close_price, volume = tokens
         close_price = float(close_price)
         volume = int(volume)
         year = int(year)
