@@ -51,27 +51,27 @@ SELECT
     ticker,
     name,
     anno,
-    ROUND(((MAX(last_close) - MIN(first_close)) / MIN(first_close)) * 100, 2) AS price_change_percent,
+    ROUND(((last_close - first_close) / first_close) * 100, 2) AS price_change_percent,
     ROUND(MIN(low), 2) AS min_price,
     ROUND(MAX(high), 2) AS max_price,
     ROUND(AVG(volume), 2) AS avg_volume
 FROM 
     intermediate_stock_prices
 GROUP BY 
-    ticker, name, anno
+    ticker, name, anno, first_close, last_close
 ORDER BY
     ticker;
 
--- -- Step 3: Export the final report to a CSV file
--- INSERT OVERWRITE DIRECTORY 'hdfs:///user/hive/warehouse/report_finale_job1_1'
--- ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
--- WITH SERDEPROPERTIES (
---    "separatorChar" = ",",
---    "quoteChar"     = "\""
--- )
--- STORED AS TEXTFILE
--- SELECT * FROM report_finale_job1_1;
+-- Step 3: Export the final report to a CSV file
+INSERT OVERWRITE DIRECTORY 'hdfs:///user/hive/warehouse/report_finale_job1_1'
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+WITH SERDEPROPERTIES (
+   "separatorChar" = ",",
+   "quoteChar"     = "\""
+)
+STORED AS TEXTFILE
+SELECT * FROM report_finale_job1_1;
 
 -- Drop intermediate tables to clean up
--- DROP TABLE IF EXISTS merged_data;
--- DROP TABLE IF EXISTS intermediate_stock_prices;
+DROP TABLE IF EXISTS merged_data;
+DROP TABLE IF EXISTS intermediate_stock_prices;
