@@ -16,7 +16,6 @@ def mapper():
         if row[0] == 'ticker':
             continue
         ticker = row[0]
-        name = row[9]
         date = row[7]
         year = datetime.strptime(date, "%Y-%m-%d").year
         volume = int(row[6])
