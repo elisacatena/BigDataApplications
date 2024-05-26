@@ -5,9 +5,12 @@ from datetime import datetime
 import argparse
 from pyspark.sql import SparkSession
 import csv
+from io import StringIO
 
 def parse_line(line):
-    fields = line.split(',')
+    # fields = line.split(',')
+    # Usa la libreria csv per leggere la linea correttamente
+    fields = csv.reader(StringIO(line)).__next__()
     if fields[0] == "ticker":
         return None
     ticker = fields[0]
@@ -22,7 +25,7 @@ def parse_line(line):
  
 def sort_and_calculate_stats(values):
     sorted_values = sorted(values, key=lambda x: x[0])
-    dates, close_prices, low_prices, high_prices, volumes, name = zip(*sorted_values)
+    _, close_prices, low_prices, high_prices, volumes, name = zip(*sorted_values)
     first_close = close_prices[0]
     last_close = close_prices[-1]
     percentual_variation_rounded = round(((last_close - first_close) / first_close) * 100, 2)
@@ -30,7 +33,7 @@ def sort_and_calculate_stats(values):
     min_low = min(low_prices)
     mean_volume = sum(volumes) / len(volumes)
     return (name[0], percentual_variation_rounded, min_low, max_high, mean_volume)
- 
+
  
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_path", type=str, help="Input dataset path")
@@ -54,11 +57,7 @@ output = stats_per_stock_per_year.map(lambda x: (x[0], x[1]))
 # Ordina l'output in base al ticker
 output_sorted = output.sortByKey()
 
-# Converti l'output in una lista di righe CSV
-output_csv = output_sorted.map(lambda x: ','.join(map(str, x)))
-
-# Salva l'output in un file CSV
-output_csv.saveAsTextFile(output_filepath)
-        
 # Riduci il numero di partizioni a 1 prima di salvare l'output
 output_sorted.coalesce(1).saveAsTextFile(output_filepath)
+
+spark.stop()
