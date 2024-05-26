@@ -8,7 +8,6 @@ import csv
 from io import StringIO
 
 def parse_line(line):
-    # fields = line.split(',')
     # Usa la libreria csv per leggere la linea correttamente
     fields = csv.reader(StringIO(line)).__next__()
     if fields[0] == "ticker":
