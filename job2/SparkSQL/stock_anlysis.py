@@ -11,8 +11,8 @@ def stock_analysis():
         .getOrCreate()
 
     # Percorsi dei file su HDFS
-    input_path = "hdfs:///user/elisacatena/input/merged_data1.csv"
-    output_path = "hdfs:///user/elisacatena/output/Spark/job1/stock_statistics1_SQL"
+    input_path = "hdfs:///user/elisacatena/input/merged_data.csv"
+    output_path = "hdfs:///user/elisacatena/output/Spark/job2/stock_statistics_SQL"
 
     # Caricamento dei dati da HDFS
     data = spark.read.csv(input_path, header=True)
@@ -82,6 +82,8 @@ def stock_analysis():
 
     # Scrivi i risultati su HDFS in formato CSV
     final_data.write.csv(output_path, header=True, mode="overwrite")
+    
+    spark.stop()
 
 if __name__ == "__main__":
     stock_analysis()
