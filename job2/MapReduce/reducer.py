@@ -10,7 +10,7 @@ def read_mapper_output(file):
         
 def reducer():
     
-    print("{:<30}\t{:<4}\t{:<30}\t{:<35}\t{:<35}\t{:<30}".format("Sector", "Year", "Industry", "Industry price change %", "Max increase ticker (increase %)", "Max volume ticker (volume)"))
+    print("{:<30}\t{:<4}\t{:<60}\t{:<35}\t{:<35}\t{:<30}".format("Sector", "Year", "Industry", "Industry price change %", "Max increase ticker (increase %)", "Max volume ticker (volume)"))
     
     # Dati strutturati come: { (sector, industry, year): { ticker: [total_volume, [close_prices]] } }
     industry_year_data = defaultdict(lambda: defaultdict(lambda: [0, []]))
@@ -70,18 +70,17 @@ def reducer():
         industry_price_change = ((industry_last_close_sum - industry_first_close_sum) / industry_first_close_sum) * 100
 
         # Aggiungi i risultati alla lista
-        results.append((sector, year, industry, max_increase, max_ticker_increase, max_volume, max_ticker_volume, industry_price_change))
-
+        results.append((sector, year, industry, industry_price_change, max_ticker_increase, max_increase, max_ticker_volume, max_volume))
     # Ordina i risultati per settore e variazione percentuale decrescente
     results.sort(key=lambda x: (x[0], -x[3]))
 
     # Stampa i risultati
-    for sector, year, industry, max_increase, max_ticker_increase, max_volume, max_ticker_volume, industry_price_change in results:
+    for sector, year, industry, industry_price_change, max_ticker_increase, max_increase, max_ticker_volume, max_volume in results:        
         max_increase_output = f"{max_ticker_increase} ({max_increase:.2f})"
         max_volume_output = f"{max_ticker_volume} ({max_volume})"
         industry_price_change_output = f"{industry_price_change:.2f}"
 
-        print("{:<30}\t{:<4}\t{:<30}\t{:<35}\t{:<35}\t{:<30}".format(sector, year, industry, industry_price_change_output, max_increase_output, max_volume_output))
+        print("{:<30}\t{:<4}\t{:<60}\t{:<35}\t{:<35}\t{:<30}".format(sector, year, industry, industry_price_change_output, max_increase_output, max_volume_output))
 
 if __name__ == "__main__":
     reducer()
