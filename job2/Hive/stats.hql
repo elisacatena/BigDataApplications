@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS close_sums_temp;
 DROP TABLE IF EXISTS variazione_percentuale_temp;
 DROP TABLE IF EXISTS incremento_percentuale_azione;
 DROP TABLE IF EXISTS massimo_incremento_percentuale;
-DROP TABLE IF EXISTS report_finale_job2_1;
+DROP TABLE IF EXISTS report_finale_job2;
 
 -- Create the table for historical stock prices data
 CREATE TABLE IF NOT EXISTS merged_data (
@@ -31,7 +31,7 @@ STORED AS TEXTFILE
 tblproperties("skip.header.line.count"="1");
 
 -- Load historical stock prices data
-LOAD DATA INPATH 'hdfs:///user/hive/warehouse/input/merged_data1.csv' OVERWRITE INTO TABLE merged_data;
+LOAD DATA INPATH 'hdfs:///user/hive/warehouse/input/merged_data.csv' OVERWRITE INTO TABLE merged_data;
 
 -- Create massimo_volume table to identify tickers with the highest volume for each industry and year
 CREATE TABLE IF NOT EXISTS massimo_volume AS
@@ -111,7 +111,7 @@ WHERE
     row_num = 1;
 
 -- Creare il report finale
-CREATE TABLE IF NOT EXISTS report_finale_job2_1 AS
+CREATE TABLE IF NOT EXISTS report_finale_job2 AS
 SELECT
     mv.sector,
     mv.anno,
@@ -135,14 +135,14 @@ ORDER BY
     mv.sector, incremento_percentuale DESC;
 
 -- Step 3: Export the final report to a CSV file
-INSERT OVERWRITE DIRECTORY 'hdfs:///user/hive/warehouse/report_finale_job2_1'
+INSERT OVERWRITE DIRECTORY 'hdfs:///user/hive/warehouse/report_finale_job2'
 ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
 WITH SERDEPROPERTIES (
    "separatorChar" = ",",
    "quoteChar"     = "\""
 )
 STORED AS TEXTFILE
-SELECT * FROM report_finale_job2_1;
+SELECT * FROM report_finale_job2;
 
 -- Drop temporary tables
 DROP TABLE IF EXISTS merged_data;
