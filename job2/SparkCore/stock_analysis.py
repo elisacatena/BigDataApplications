@@ -16,7 +16,7 @@ def parse_line(line):
     date = datetime.strptime(fields[7], '%Y-%m-%d')
     year = date.year
     close = float(fields[2])
-    volume = float(fields[6])
+    volume = int(fields[6])
     sector = fields[10]
     industry = fields[11]
     return ((sector, industry, year, ticker), (date, close, volume))
@@ -64,7 +64,7 @@ def calculate_overall_stats(data):
                 max_ticker_increase = ticker
 
         industry_price_change = ((industry_last_close_sum - industry_first_close_sum) / industry_first_close_sum) * 100
-        results.append((sector, year, industry, round(industry_price_change, 2), max_ticker_increase, round(max_increase, 2), max_ticker_volume, round(max_volume, 2)))
+        results.append((sector, year, industry, round(industry_price_change, 2), max_ticker_increase, round(max_increase, 2), max_ticker_volume, max_volume))
 
     return results
 
