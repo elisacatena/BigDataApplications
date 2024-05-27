@@ -93,3 +93,5 @@ output_sorted = output.sortBy(lambda x: (x[0], -x[3]))
 
 # Riduci il numero di partizioni a 1 prima di salvare l'output
 output_sorted.coalesce(1).saveAsTextFile(output_filepath)
+
+spark.stop()
