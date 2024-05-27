@@ -11,8 +11,8 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # Percorso dei file su HDFS
-input_path = "hdfs:///user/elisacatena/input/merged_data1.csv"
-output_path = "hdfs:///user/elisacatena/output/Spark/job1/stock_statistics1_SQL"
+input_path = "hdfs:///user/elisacatena/input/merged_data.csv"
+output_path = "hdfs:///user/elisacatena/output/Spark/job1/stock_statistics_SQL"
 
 # Caricamento dei dati da HDFS
 data = spark.read.csv(input_path, header=True)
