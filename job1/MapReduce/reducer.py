@@ -41,8 +41,8 @@ def main():
         data['total_volume'] += volume
         data['count'] += 1
 
-    for ticker, years_data in all_data.items():
-        for year, data in years_data.items():
+    for ticker, years_data in sorted(all_data.items()):
+        for year, data in sorted(years_data.items()):
             print_statistics(ticker, year, data)
 
 def print_statistics(ticker, year, data):
