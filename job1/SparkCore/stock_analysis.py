@@ -28,9 +28,9 @@ def sort_and_calculate_stats(values):
     first_close = close_prices[0]
     last_close = close_prices[-1]
     percentual_variation_rounded = round(((last_close - first_close) / first_close) * 100, 2)
-    max_high = max(high_prices)
-    min_low = min(low_prices)
-    mean_volume = sum(volumes) / len(volumes)
+    max_high = round(max(high_prices),2)
+    min_low = round(min(low_prices),2)
+    mean_volume = round(sum(volumes) / len(volumes),2)
     return (name[0], percentual_variation_rounded, min_low, max_high, mean_volume)
 
  
