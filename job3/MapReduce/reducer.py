@@ -18,7 +18,30 @@ def calculate_annual_trend(prices):
         trend = ((end_price - start_price) / start_price) * 100
         trends[year] = round(trend,2)
     return trends
+
+def find_tickers_with_same_trend(data):
+    result = []
     
+    for ticker, trends in data.items():
+        print(f"Ticker: {ticker}, Trends: {trends}")
+        consecutive_years = 1
+        prev_trend = None
+        
+        for year, trend in sorted(trends.items()):
+            print(f"\tYear: {year}, Trend: {trend}")
+            if prev_trend is None:
+                prev_trend = trend
+            elif trend == prev_trend:
+                consecutive_years += 1
+            else:
+                consecutive_years = 1
+                prev_trend = trend
+        
+        if consecutive_years >= 3:
+            print(f"Trend found for {ticker}: {prev_trend} for at least three consecutive years")
+            result.append(ticker)    
+    return result
+
 def main():
     data = defaultdict(lambda: defaultdict(list))
     
@@ -34,10 +57,18 @@ def main():
         for year, prices in years.items():
             data[ticker][year] = sorted(prices, key=lambda x: datetime.strptime(x[0], "%Y-%m-%d"))
     
-    # Calculate annual trends and print the result
+    # Calculate annual trends
     for ticker, years in data.items():
         trends = calculate_annual_trend(years)
-        print(f"Trends for {ticker}: {trends}")
+        data[ticker] = trends
+    
+    # Find tickers with the same trend for at least three consecutive years
+    tickers_with_same_trend = find_tickers_with_same_trend(data)
+
+    # Print the tickers with the same trend
+    print("Tickers with the same trend for at least three consecutive years:")
+    for ticker in tickers_with_same_trend:
+        print(ticker)
     
 
 if __name__ == "__main__":
