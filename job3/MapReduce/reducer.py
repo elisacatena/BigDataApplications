@@ -3,7 +3,7 @@
 
 import itertools
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime
 
 def read_input(file):
@@ -19,27 +19,25 @@ def calculate_annual_trend(prices):
         trends[year] = round(trend,2)
     return trends
 
+from itertools import combinations
+
 def find_tickers_with_same_trend(data):
-    result = []
+    # Dizionario per memorizzare i sottoinsiemi di lunghezza 3 per ciascun ticker
+    trend_subsets = {}
     
     for ticker, trends in data.items():
-        print(f"Ticker: {ticker}, Trends: {trends}")
-        consecutive_years = 1
-        prev_trend = None
-        
-        for year, trend in sorted(trends.items()):
-            print(f"\tYear: {year}, Trend: {trend}")
-            if prev_trend is None:
-                prev_trend = trend
-            elif trend == prev_trend:
-                consecutive_years += 1
-            else:
-                consecutive_years = 1
-                prev_trend = trend
-        
-        if consecutive_years >= 3:
-            print(f"Trend found for {ticker}: {prev_trend} for at least three consecutive years")
-            result.append(ticker)    
+        trend_values = list(trends.values())  # Ottieni la lista dei trend per il ticker corrente
+        subsets = set(combinations(trend_values, 3))  # Trova tutti i sottoinsiemi di lunghezza 3
+        trend_subsets[ticker] = subsets
+    
+    # Conta quanti ticker condividono almeno uno dei sottoinsiemi
+    common_subsets = Counter()
+    for subsets in trend_subsets.values():
+        common_subsets.update(subsets)
+    
+    # Trova i ticker che condividono almeno uno dei sottoinsiemi in comune
+    result = [ticker for ticker, subsets in trend_subsets.items() if any(common_subsets[subset] >= 2 for subset in subsets)]
+    
     return result
 
 def main():
@@ -67,8 +65,13 @@ def main():
 
     # Print the tickers with the same trend
     print("Tickers with the same trend for at least three consecutive years:")
+    tickers = []
+    trend_str = ""
     for ticker in tickers_with_same_trend:
-        print(ticker)
+        tickers.append(ticker)
+        trend_str = ", ".join([f"{year}:{trend}%" for year, trend in data[ticker].items()])
+    print("{" + ", ".join(ticker.strip() for ticker in tickers) + "}:" + f"({trend_str})")
+
     
 
 if __name__ == "__main__":
