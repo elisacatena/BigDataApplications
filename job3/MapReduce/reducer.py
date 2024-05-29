@@ -36,7 +36,14 @@ def find_tickers_with_same_trend(data):
         common_subsets.update(subsets)
     
     # Trova i ticker che condividono almeno uno dei sottoinsiemi in comune
-    result = [ticker for ticker, subsets in trend_subsets.items() if any(common_subsets[subset] >= 2 for subset in subsets)]
+    result = {}
+    for ticker, subsets in trend_subsets.items():
+        for subset in subsets:
+            if common_subsets[subset] >= 2:
+                if subset not in result:
+                    result[subset] = [ticker]
+                else:
+                    result[subset].append(ticker)
     
     return result
 
@@ -65,12 +72,11 @@ def main():
 
     # Print the tickers with the same trend
     print("Tickers with the same trend for at least three consecutive years:")
-    tickers = []
-    trend_str = ""
-    for ticker in tickers_with_same_trend:
-        tickers.append(ticker)
-        trend_str = ", ".join([f"{year}:{trend}%" for year, trend in data[ticker].items()])
-    print("{" + ", ".join(ticker.strip() for ticker in tickers) + "}:" + f"({trend_str})")
+    for subset, tickers in tickers_with_same_trend.items():
+        trend_str = ", ".join([f"{year}:{trend}%" for year, trend in zip(data[tickers[0]].keys(), subset)])
+        print("{" + ", ".join(ticker.strip() for ticker in tickers) + "}:" + f"({trend_str})")
+
+
 
     
 
