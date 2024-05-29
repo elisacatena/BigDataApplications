@@ -2,6 +2,7 @@
 DROP TABLE IF EXISTS merged_data;
 DROP TABLE IF EXISTS intermediate_stock_prices;
 DROP TABLE IF EXISTS report_finale_job1;
+SET mapreduce.job.reduces=2;
 
 -- Create the table for historical stock prices data
 CREATE TABLE IF NOT EXISTS merged_data (
