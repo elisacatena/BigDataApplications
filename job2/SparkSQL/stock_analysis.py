@@ -2,7 +2,7 @@
 """spark application"""
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, collect_list, year, first, last, sum as spark_sum, max as spark_max, round, row_number
+from pyspark.sql.functions import col, collect_list, year, first, last, sum as spark_sum, max as spark_max, round, row_number, concat, lit
 from pyspark.sql.window import Window
 
 def stock_analysis():
@@ -47,7 +47,7 @@ def stock_analysis():
     # Finestra per trovare il ticker con il massimo incremento percentuale
     window_spec_increase = Window.partitionBy("sector", "industry", "year").orderBy(col("percent_increase").desc())
     grouped_data = grouped_data.withColumn("rank_increase", row_number().over(window_spec_increase))
-    max_increase_ticker = grouped_data.filter(col("rank_increase") == 1).select("sector", "industry", "year", col("ticker").alias("Max increase ticker"), round(col("percent_increase"),2).alias("Max increase %"))
+    max_increase_ticker = grouped_data.filter(col("rank_increase") == 1).select("sector", "industry", "year", col("ticker").alias("Max increase ticker"), round(col("percent_increase"), 2).alias("Max increase %"))
 
     # Finestra per trovare il ticker con il volume massimo
     window_spec_volume = Window.partitionBy("sector", "industry", "year").orderBy(col("total_volume").desc())
@@ -58,16 +58,18 @@ def stock_analysis():
     final_data = final_data.join(max_increase_ticker, on=["sector", "industry", "year"], how="left")
     final_data = final_data.join(max_volume_ticker, on=["sector", "industry", "year"], how="left")
 
+    # Concatena i ticker con i rispettivi valori senza spazi indesiderati
+    final_data = final_data.withColumn("Max increase ticker (increase %)", concat(col("Max increase ticker"), lit(" ("), col("Max increase %"), lit(")")))
+    final_data = final_data.withColumn("Max volume ticker (volume)", concat(col("Max volume ticker"), lit(" ("), col("Max volume"), lit(")")))
+
     # Seleziona le colonne finali e riformatta i dati per la scrittura
     final_data = final_data.select(
         col("sector").alias("Sector"),
         col("year").alias("Year"),
         col("industry").alias("Industry"),
         col("Industry price change %"),
-        col("Max increase ticker"),
-        col("Max increase %"),
-        col("Max volume ticker"),
-        col("Max volume")
+        col("Max increase ticker (increase %)"),
+        col("Max volume ticker (volume)")
     )
 
     # Ordina i dati per settore e variazione percentuale decrescente

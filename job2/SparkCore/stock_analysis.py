@@ -91,7 +91,20 @@ output = spark.sparkContext.parallelize(results)
 # Ordina l'output in base al settore e alla variazione percentuale in modo decrescente
 output_sorted = output.sortBy(lambda x: (x[0], -x[3]))
 
+# Funzione per formattare le righe di output come richiesto
+def format_output(row):
+    sector, year, industry, industry_price_change, max_ticker_increase, max_increase, max_ticker_volume, max_volume = row
+    return f'"{sector}",{year},"{industry}",{industry_price_change},{max_ticker_increase} ({max_increase}),{max_ticker_volume} ({max_volume})'
+
+# Formatta l'output
+formatted_output = output_sorted.map(format_output)
+
+# Aggiungi l'intestazione
+header = "Sector, Year, Industry, Industry price change %, Max increase ticker (increase %), Max volume ticker (volume)"
+formatted_output_with_header = spark.sparkContext.parallelize([header]) \
+    .union(formatted_output)
+
 # Riduci il numero di partizioni a 1 prima di salvare l'output
-output_sorted.coalesce(1).saveAsTextFile(output_filepath)
+formatted_output_with_header.coalesce(1).saveAsTextFile(output_filepath)
 
 spark.stop()
