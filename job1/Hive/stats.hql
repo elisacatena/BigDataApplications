@@ -61,7 +61,7 @@ FROM
 GROUP BY 
     ticker, name, anno, first_close, last_close
 ORDER BY
-    ticker;
+    ticker, anno;
 
 -- Step 3: Export the final report to a CSV file
 INSERT OVERWRITE DIRECTORY 'hdfs:///user/hive/warehouse/report_finale_job1'
