@@ -51,12 +51,21 @@ lines = spark.sparkContext.textFile(dataset_filepath).cache()
 data = lines.map(parse_line).filter(lambda x: x is not None).groupByKey()
 
 stats_per_stock_per_year = data.mapValues(sort_and_calculate_stats)
-output = stats_per_stock_per_year.map(lambda x: (x[0], x[1]))
- 
-# Ordina l'output in base al ticker
+
+# Maintain key-value pair structure for sorting
+output = stats_per_stock_per_year.map(lambda x: (x[0], f"{x[0][0]}, \"{x[1][0]}\", {x[0][1]}, {x[1][1]}, {x[1][2]}, {x[1][3]}, {x[1][4]}"))
+
+# Sort the output by ticker
 output_sorted = output.sortByKey()
 
-# Riduci il numero di partizioni a 1 prima di salvare l'output
-output_sorted.coalesce(1).saveAsTextFile(output_filepath)
+# Extract the values for saving without parentheses
+formatted_output = output_sorted.map(lambda x: x[1])
+
+# Add the header
+header = spark.sparkContext.parallelize(["Ticker,Name,Year,Percent Change,Min Price,Max Price,Avg Volume"])
+final_output = header.union(formatted_output)
+
+# Reduce the number of partitions to 1 before saving the output
+final_output.coalesce(1).saveAsTextFile(output_filepath)
 
 spark.stop()
