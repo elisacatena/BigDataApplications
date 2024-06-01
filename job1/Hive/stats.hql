@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS intermediate_stock_prices;
 DROP TABLE IF EXISTS report_finale_job1;
 SET mapreduce.job.reduces=2;
 
--- Create the table for historical stock prices data
+-- Create the table for merged data
 CREATE TABLE IF NOT EXISTS merged_data (
     `ticker` STRING,
     `open` FLOAT,
@@ -27,7 +27,7 @@ WITH SERDEPROPERTIES (
 STORED AS TEXTFILE
 tblproperties("skip.header.line.count"="1");
 
--- Load historical stock prices data
+-- Load merged data from hdfs
 LOAD DATA INPATH 'hdfs:///user/hive/warehouse/input/merged_data.csv' OVERWRITE INTO TABLE merged_data;
 
 -- Step 1: Create an intermediate table for window functions
