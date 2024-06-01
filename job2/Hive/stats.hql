@@ -1,14 +1,13 @@
 -- Drop existing tables if they exist
 DROP TABLE IF EXISTS merged_data;
-DROP TABLE IF EXISTS massimo_volume;
 DROP TABLE IF EXISTS close_sums_temp;
-DROP TABLE IF EXISTS variazione_percentuale_temp;
-DROP TABLE IF EXISTS incremento_percentuale_azione;
-DROP TABLE IF EXISTS massimo_incremento_percentuale;
+DROP TABLE IF EXISTS industry_metrics;
+DROP TABLE IF EXISTS stock_max_increment_filtered;
+DROP TABLE IF EXISTS stock_max_volume;
 DROP TABLE IF EXISTS report_finale_job2;
 SET mapreduce.job.reduces=2;
 
--- Create the table for historical stock prices data
+-- Create the table for merged data
 CREATE TABLE IF NOT EXISTS merged_data (
     `ticker` STRING,
     `open` FLOAT,
@@ -39,16 +38,48 @@ CREATE TABLE IF NOT EXISTS close_sums_temp AS
 SELECT
     sector,
     industry,
-    ticker,
     YEAR(data) AS anno,
-    FIRST_VALUE(close) OVER (PARTITION BY industry, YEAR(data), ticker ORDER BY data ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS first_close,
-    LAST_VALUE(close) OVER (PARTITION BY industry, YEAR(data), ticker ORDER BY data ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_close,
+    ticker,
+    FIRST_VALUE(`close`) OVER (PARTITION BY sector, industry, YEAR(data), ticker ORDER BY data) AS first_close,
+    LAST_VALUE(`close`) OVER (PARTITION BY sector, industry, YEAR(data), ticker ORDER BY data ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_close,
     SUM(volume) OVER (PARTITION BY sector, industry, YEAR(data), ticker) AS total_volume
 FROM
     merged_data;
 
--- Create massimo_volume table to identify tickers with the highest volume for each industry and year
-CREATE TABLE IF NOT EXISTS massimo_volume AS
+-- Calculate the total first and last close prices for each industry per year
+CREATE TABLE IF NOT EXISTS industry_metrics AS
+SELECT
+    sector,
+    industry,
+    anno,
+    SUM(first_close) AS industry_first_total,
+    SUM(last_close) AS industry_last_total
+FROM close_sums_temp
+GROUP BY sector, industry, anno;
+
+-- Calculate the percentage increment for each stock within each industry and year
+CREATE TABLE IF NOT EXISTS stock_max_increment_filtered AS
+SELECT
+    sector,
+    industry,
+    anno,
+    ticker,
+    (last_close - first_close) / first_close * 100 AS increment_percentage
+FROM (
+    SELECT
+        sector,
+        industry,
+        anno,
+        ticker,
+        first_close,
+        last_close,
+        ROW_NUMBER() OVER (PARTITION BY sector, industry, anno ORDER BY (last_close - first_close) / first_close * 100 DESC) AS rank
+    FROM close_sums_temp
+) ranked
+WHERE rank = 1;
+
+-- Identify the stock with the highest volume within each industry and year
+CREATE TABLE IF NOT EXISTS stock_max_volume AS
 SELECT
     sector,
     industry,
@@ -69,70 +100,25 @@ FROM (
 WHERE
     row_num = 1;
 
--- Calculate the percentage change for each industry and year
-CREATE TABLE IF NOT EXISTS variazione_percentuale_temp AS
-SELECT
-    industry,
-    anno,
-    ROUND((SUM(last_close) - SUM(first_close)) / SUM(first_close) * 100, 2) AS variazione_percentuale
-FROM
-    close_sums_temp
-GROUP BY
-    industry, anno;
-
--- Calculate the percentage increase for each ticker within each industry and year
-CREATE TABLE IF NOT EXISTS incremento_percentuale_azione AS
-SELECT
-    industry,
-    ticker,
-    anno,
-    ROUND((last_close - first_close) / first_close * 100, 2) AS incremento_percentuale
-FROM
-    close_sums_temp;
-
--- Identify the ticker with the highest percentage increase within each industry and year
-CREATE TABLE IF NOT EXISTS massimo_incremento_percentuale AS
-SELECT
-    industry,
-    anno,
-    ticker,
-    incremento_percentuale
-FROM (
-    SELECT
-        industry,
-        anno,
-        ticker,
-        incremento_percentuale,
-        ROW_NUMBER() OVER(PARTITION BY industry, anno ORDER BY incremento_percentuale DESC) AS row_num
-    FROM
-        incremento_percentuale_azione
-) ranked
-WHERE
-    row_num = 1;
-
 -- Create the final report table
 CREATE TABLE IF NOT EXISTS report_finale_job2 AS
 SELECT
-    mv.sector,
-    mv.anno,
-    mv.industry,
-    vp.variazione_percentuale,
-    mip.ticker AS azione_massimo_incremento,
-    mip.incremento_percentuale AS incremento_percentuale,
-    mv.azione_massimo_volume AS azione_massimo_volume,
-    mv.volume_transazioni AS volume_transazioni
+    im.sector,
+    im.industry,
+    im.anno,
+    ((im.industry_last_total - im.industry_first_total) / im.industry_first_total) * 100 AS industry_change_percentage,
+    smif.ticker AS max_increment_ticker,
+    smif.increment_percentage,
+    smv.azione_massimo_volume AS max_volume_ticker,
+    smv.volume_transazioni AS max_volume
 FROM
-    massimo_volume mv
+    industry_metrics im
 JOIN
-    variazione_percentuale_temp vp
-ON 
-    mv.industry = vp.industry AND mv.anno = vp.anno
+    stock_max_increment_filtered smif ON im.sector = smif.sector AND im.industry = smif.industry AND im.anno = smif.anno
 JOIN
-    massimo_incremento_percentuale mip 
-ON
-    mip.industry = vp.industry AND mip.anno = vp.anno
+    stock_max_volume smv ON im.sector = smv.sector AND im.industry = smv.industry AND im.anno = smv.anno
 ORDER BY
-    mv.sector, incremento_percentuale DESC;
+    im.sector, industry_change_percentage DESC;
 
 -- Step 3: Export the final report to a CSV file
 INSERT OVERWRITE DIRECTORY 'hdfs:///user/hive/warehouse/report_finale_job2'
@@ -146,8 +132,7 @@ SELECT * FROM report_finale_job2;
 
 -- Drop temporary tables
 DROP TABLE IF EXISTS merged_data;
-DROP TABLE IF EXISTS massimo_volume;
 DROP TABLE IF EXISTS close_sums_temp;
-DROP TABLE IF EXISTS variazione_percentuale_temp;
-DROP TABLE IF EXISTS incremento_percentuale_azione;
-DROP TABLE IF EXISTS massimo_incremento_percentuale;
+DROP TABLE IF EXISTS industry_metrics;
+DROP TABLE IF EXISTS stock_max_increment_filtered;
+DROP TABLE IF EXISTS stock_max_volume;
