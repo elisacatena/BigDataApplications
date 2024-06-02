@@ -1,10 +1,6 @@
--- Drop existing tables if they exist
+-- Elimina la tabella merged_data se esiste
 DROP TABLE IF EXISTS merged_data;
-DROP TABLE IF EXISTS close_sums_temp;
-DROP TABLE IF EXISTS industry_metrics;
-DROP TABLE IF EXISTS stock_max_increment_filtered;
-DROP TABLE IF EXISTS stock_max_volume;
-DROP TABLE IF EXISTS report_finale_job2;
+DROP TABLE IF EXISTS stocks;
 SET mapreduce.job.reduces=2;
 
 -- Create the table for merged data
@@ -30,97 +26,83 @@ WITH SERDEPROPERTIES (
 STORED AS TEXTFILE
 tblproperties("skip.header.line.count"="1");
 
--- Load historical stock prices data
+-- Carica i dati nella tabella merged_data
 LOAD DATA INPATH 'hdfs:///user/hive/warehouse/input/merged_data.csv' OVERWRITE INTO TABLE merged_data;
 
--- Calculate first and last close prices, volume sums, and other required fields
-CREATE TABLE IF NOT EXISTS close_sums_temp AS
-SELECT
-    sector,
-    industry,
-    YEAR(data) AS anno,
+CREATE TABLE IF NOT EXISTS stocks AS 
+SELECT 
     ticker,
-    FIRST_VALUE(`close`) OVER (PARTITION BY sector, industry, YEAR(data), ticker ORDER BY data) AS first_close,
-    LAST_VALUE(`close`) OVER (PARTITION BY sector, industry, YEAR(data), ticker ORDER BY data ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_close,
-    SUM(volume) OVER (PARTITION BY sector, industry, YEAR(data), ticker) AS total_volume
+    close,
+    volume,
+    data,
+    YEAR(data) AS anno,
+    sector,
+    industry
 FROM
     merged_data;
 
--- Calculate the total first and last close prices for each industry per year
-CREATE TABLE IF NOT EXISTS industry_metrics AS
-SELECT
-    sector,
-    industry,
-    anno,
-    SUM(first_close) AS industry_first_total,
-    SUM(last_close) AS industry_last_total
-FROM close_sums_temp
-GROUP BY sector, industry, anno;
-
--- Calculate the percentage increment for each stock within each industry and year
-CREATE TABLE IF NOT EXISTS stock_max_increment_filtered AS
-SELECT
-    sector,
-    industry,
-    anno,
-    ticker,
-    (last_close - first_close) / first_close * 100 AS increment_percentage
-FROM (
+WITH yearly_stats AS (
     SELECT
         sector,
         industry,
         anno,
         ticker,
-        first_close,
-        last_close,
-        ROW_NUMBER() OVER (PARTITION BY sector, industry, anno ORDER BY (last_close - first_close) / first_close * 100 DESC) AS rank
-    FROM close_sums_temp
-) ranked
-WHERE rank = 1;
-
--- Identify the stock with the highest volume within each industry and year
-CREATE TABLE IF NOT EXISTS stock_max_volume AS
-SELECT
-    sector,
-    industry,
-    anno,
-    ticker AS azione_massimo_volume,
-    total_volume AS volume_transazioni
-FROM (
+        FIRST_VALUE(close) OVER (PARTITION BY sector, industry, ticker, anno ORDER BY data) AS first_close,
+        LAST_VALUE(close) OVER (PARTITION BY sector, industry, ticker, anno ORDER BY data ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_close,
+        SUM(volume) OVER (PARTITION BY sector, industry, anno, ticker) AS total_volume
+    FROM stocks
+),
+aggregated_metrics AS (
+    SELECT
+        sector,
+        industry,
+        anno,
+        SUM(first_close) AS total_initial_close,
+        SUM(last_close) AS total_final_close
+    FROM yearly_stats
+    GROUP BY sector, industry, anno
+),
+max_increment_ticker AS (
     SELECT
         sector,
         industry,
         anno,
         ticker,
-        total_volume,
-        ROW_NUMBER() OVER (PARTITION BY sector, industry, anno ORDER BY total_volume DESC) AS row_num
-    FROM
-        close_sums_temp
-) ranked
-WHERE
-    row_num = 1;
-
--- Create the final report table
-CREATE TABLE IF NOT EXISTS report_finale_job2 AS
-SELECT
-    im.sector,
-    im.industry,
-    im.anno,
-    ((im.industry_last_total - im.industry_first_total) / im.industry_first_total) * 100 AS industry_change_percentage,
-    smif.ticker AS max_increment_ticker,
-    smif.increment_percentage,
-    smv.azione_massimo_volume AS max_volume_ticker,
-    smv.volume_transazioni AS max_volume
-FROM
-    industry_metrics im
-JOIN
-    stock_max_increment_filtered smif ON im.sector = smif.sector AND im.industry = smif.industry AND im.anno = smif.anno
-JOIN
-    stock_max_volume smv ON im.sector = smv.sector AND im.industry = smv.industry AND im.anno = smv.anno
-ORDER BY
-    im.sector, industry_change_percentage DESC;
-
--- Step 3: Export the final report to a CSV file
+        ((last_close - first_close) / first_close) * 100 AS increment_percentage,
+        ROW_NUMBER() OVER (PARTITION BY sector, industry, anno ORDER BY ((last_close - first_close) / first_close) * 100 DESC) AS rank
+    FROM yearly_stats
+),
+top_increment_ticker AS (
+    SELECT
+        sector,
+        industry,
+        anno,
+        ticker,
+        increment_percentage
+    FROM max_increment_ticker
+    WHERE rank = 1
+),
+top_volume_ticker AS (
+    SELECT
+        sector,
+        industry,
+        anno,
+        ticker AS max_volume_ticker,
+        total_volume AS max_volume
+    FROM (
+        SELECT
+            sector,
+            industry,
+            anno,
+            ticker,
+            total_volume,
+            ROW_NUMBER() OVER (PARTITION BY sector, industry, anno ORDER BY total_volume DESC) AS row_num
+        FROM
+            yearly_stats
+    ) ranked
+    WHERE
+        row_num = 1
+)
 INSERT OVERWRITE DIRECTORY 'hdfs:///user/hive/warehouse/report_finale_job2'
 ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
 WITH SERDEPROPERTIES (
@@ -128,11 +110,23 @@ WITH SERDEPROPERTIES (
    "quoteChar"     = "\""
 )
 STORED AS TEXTFILE
-SELECT * FROM report_finale_job2;
+SELECT
+    am.sector,
+    am.anno,
+    am.industry, 
+    ROUND((((am.total_final_close - am.total_initial_close) / am.total_initial_close) * 100),2) AS industry_price_change,
+    tit.ticker AS max_increase_ticker,
+    ROUND(tit.increment_percentage,2),
+    tvt.max_volume_ticker,
+    tvt.max_volume
+FROM
+    aggregated_metrics am
+JOIN
+    top_increment_ticker tit ON am.sector = tit.sector AND am.industry = tit.industry AND am.anno = tit.anno
+JOIN
+    top_volume_ticker tvt ON am.sector = tvt.sector AND am.industry = tvt.industry AND am.anno = tvt.anno
+ORDER BY
+    am.sector, industry_price_change DESC;
 
--- Drop temporary tables
 DROP TABLE IF EXISTS merged_data;
-DROP TABLE IF EXISTS close_sums_temp;
-DROP TABLE IF EXISTS industry_metrics;
-DROP TABLE IF EXISTS stock_max_increment_filtered;
-DROP TABLE IF EXISTS stock_max_volume;
+DROP TABLE IF EXISTS stocks;
