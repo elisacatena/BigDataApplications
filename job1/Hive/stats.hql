@@ -76,3 +76,4 @@ SELECT * FROM report_finale_job1;
 -- Drop intermediate tables to clean up
 DROP TABLE IF EXISTS merged_data;
 DROP TABLE IF EXISTS intermediate_stock_prices;
+DROP TABLE IF EXISTS report_finale_job1;
