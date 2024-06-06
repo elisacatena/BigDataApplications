@@ -69,7 +69,7 @@ final_data = final_data.join(max_volume_ticker, on=["sector", "industry", "year"
 final_data = final_data.withColumn("Max increase ticker (increase %)", concat(col("Max increase ticker"), lit(" ("), col("Max increase %"), lit(")")))
 final_data = final_data.withColumn("Max volume ticker (volume)", concat(col("Max volume ticker"), lit(" ("), col("Max volume"), lit(")")))
 
-# Seleziona le colonne finali e riformatta i dati per la scrittura
+# Seleziona le colonne finali e rinomina
 final_data = final_data.select(
     col("sector").alias("Sector"),
     col("year").alias("Year"),
