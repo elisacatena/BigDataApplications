@@ -1,4 +1,4 @@
--- Drop existing tables if they exist
+-- Drop existing tables
 DROP TABLE IF EXISTS merged_data;
 DROP TABLE IF EXISTS stocks;
 DROP TABLE IF EXISTS intermediate_stock_prices;
