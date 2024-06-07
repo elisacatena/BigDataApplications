@@ -23,7 +23,7 @@ def parse_line(line):
 
 def sort_and_calculate_stats(values):
     sorted_values = sorted(values, key=lambda x: x[0])
-    dates, close_prices, volumes = zip(*sorted_values)
+    _, close_prices, volumes = zip(*sorted_values)
     first_close = close_prices[0]
     last_close = close_prices[-1]
     total_volume = sum(volumes)
@@ -31,9 +31,6 @@ def sort_and_calculate_stats(values):
     percentual_variation = ((last_close - first_close) / first_close) * 100
 
     return (total_volume, first_close, last_close, percentual_variation)
-
-def combine_stats(data1, data2):
-    return data1 + data2
 
 def calculate_overall_stats(key, values):
     sector, industry, year = key
