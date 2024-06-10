@@ -28,8 +28,8 @@ def main():
             for year in three_years:
                 # Sort by date
                 price_data = sorted(years[year])
-                first_date, first_close = price_data[0]
-                last_date, last_close = price_data[-1]
+                _, first_close = price_data[0]
+                _, last_close = price_data[-1]
                 percent_change = ((last_close - first_close) / first_close) * 100
                 percent_changes.append(round(percent_change,2))
             group_key = tuple(percent_changes)
@@ -37,7 +37,7 @@ def main():
 
     for group_key, ticker_years in group_changes.items():
         if len(ticker_years) >= 2:
-            tickers = ", ".join(ticker_years.keys())
+            tickers = ", ".join(ticker_years.keys()).replace(" ", "")
             years_changes = ", ".join(f"{year}:{change}%" for year, change in zip(list(ticker_years.values())[0], group_key))
             print(f"{{{tickers}}}: {years_changes}")
 
