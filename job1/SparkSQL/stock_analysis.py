@@ -55,7 +55,7 @@ final_result = final_result.withColumnRenamed("name", "Name") \
                            .withColumnRenamed("year", "Year")
 
 # Salvataggio del risultato su HDFS come file CSV
-final_result.write.csv(output_path, header=True)
+final_result.coalesce(1).write.csv(output_path, header=True)
 
 # Arresto della sessione Spark
 spark.stop()
