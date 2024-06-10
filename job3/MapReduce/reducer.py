@@ -35,11 +35,13 @@ def main():
             group_key = tuple(percent_changes)
             group_changes[group_key][ticker] = three_years
 
+    print("{:<30}\t{:<30}\t{:<30}".format("Tickers", "Years", "Percent Changes"))
     for group_key, ticker_years in group_changes.items():
         if len(ticker_years) >= 2:
             tickers = ", ".join(ticker_years.keys()).replace(" ", "")
-            years_changes = ", ".join(f"{year}:{change}%" for year, change in zip(list(ticker_years.values())[0], group_key))
-            print(f"{{{tickers}}}: {years_changes}")
+            years = ", ".join(str(year) for year in list(ticker_years.values())[0])
+            percent_changes = "%, ".join(str(change) for change in group_key)
+            print("{:<30}\t{:<30}\t{:<30}".format(tickers, years, percent_changes+'%'))
 
 if __name__ == "__main__":
     main()
