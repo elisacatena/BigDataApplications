@@ -28,9 +28,9 @@ data = spark.read.csv(input_path, header=True)
 data = data.withColumn("year", year(col("date")))
 
 # Calcolo delle statistiche annuali per ogni azione
-window_spec = Window.partitionBy("ticker", "year").orderBy("date")
-statistics = data.withColumn("first_close", first("close").over(window_spec)) \
-    .withColumn("last_close", last("close").over(window_spec)) \
+window = Window.partitionBy("ticker", "year").orderBy("date")
+statistics = data.withColumn("first_close", first("close").over(window)) \
+    .withColumn("last_close", last("close").over(window)) \
     .groupBy("ticker", "year") \
     .agg(
         round(((last("close") - first("close")) / first("close") * 100), 2).alias("Percent Change"),
@@ -55,7 +55,7 @@ final_result = final_result.withColumnRenamed("name", "Name") \
                            .withColumnRenamed("year", "Year")
 
 # Salvataggio del risultato su HDFS come file CSV
-final_result.coalesce(1).write.csv(output_path, header=True)
+final_result.write.csv(output_path, header=True)
 
 # Arresto della sessione Spark
 spark.stop()
