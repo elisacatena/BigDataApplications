@@ -52,13 +52,13 @@ final_data = grouped_data.groupBy("sector", "industry", "year") \
 final_data = final_data.withColumn("Industry price change %", round(((col("industry_last_close_sum") - col("industry_first_close_sum")) / col("industry_first_close_sum") * 100), 2))
 
 # Finestra per trovare il ticker con il massimo incremento percentuale
-window_spec_increase = Window.partitionBy("sector", "industry", "year").orderBy(col("percent_increase").desc())
-grouped_data = grouped_data.withColumn("rank_increase", row_number().over(window_spec_increase))
+window_increase = Window.partitionBy("sector", "industry", "year").orderBy(col("percent_increase").desc())
+grouped_data = grouped_data.withColumn("rank_increase", row_number().over(window_increase))
 max_increase_ticker = grouped_data.filter(col("rank_increase") == 1).select("sector", "industry", "year", col("ticker").alias("Max increase ticker"), round(col("percent_increase"), 2).alias("Max increase %"))
 
 # Finestra per trovare il ticker con il volume massimo
-window_spec_volume = Window.partitionBy("sector", "industry", "year").orderBy(col("total_volume").desc())
-grouped_data = grouped_data.withColumn("rank_volume", row_number().over(window_spec_volume))
+window_volume = Window.partitionBy("sector", "industry", "year").orderBy(col("total_volume").desc())
+grouped_data = grouped_data.withColumn("rank_volume", row_number().over(window_volume))
 max_volume_ticker = grouped_data.filter(col("rank_volume") == 1).select("sector", "industry", "year", col("ticker").alias("Max volume ticker"), col("total_volume").alias("Max volume"))
 
 # Unisci i dati finali con i ticker massimo incremento e volume
