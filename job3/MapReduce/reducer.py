@@ -12,6 +12,7 @@ def main():
 
     # A dictionary to store prices for each ticker and year
     ticker_data = defaultdict(lambda: defaultdict(list))
+    group_changes = defaultdict(lambda: defaultdict(list))
 
     for tokens in read_mapper_output(sys.stdin):
         ticker, year, date, close_price = tokens
@@ -31,7 +32,14 @@ def main():
                 last_date, last_close = price_data[-1]
                 percent_change = ((last_close - first_close) / first_close) * 100
                 percent_changes.append(round(percent_change,2))
-            print(f"{ticker}\t{three_years}\t{percent_changes}")
+            group_key = tuple(percent_changes)
+            group_changes[group_key][ticker] = three_years
+
+    for group_key, ticker_years in group_changes.items():
+        if len(ticker_years) >= 2:
+            print(f"Gruppo Variazioni: {group_key}")
+            for ticker, years in ticker_years.items():
+                print(f"Ticker: {ticker}, Anni: {years}")
 
 if __name__ == "__main__":
     main()
