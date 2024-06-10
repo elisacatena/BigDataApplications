@@ -37,9 +37,9 @@ def main():
 
     for group_key, ticker_years in group_changes.items():
         if len(ticker_years) >= 2:
-            print(f"Gruppo Variazioni: {group_key}")
-            for ticker, years in ticker_years.items():
-                print(f"Ticker: {ticker}, Anni: {years}")
+            tickers = ", ".join(ticker_years.keys())
+            years_changes = ", ".join(f"{year}:{change}%" for year, change in zip(list(ticker_years.values())[0], group_key))
+            print(f"{{{tickers}}}: {years_changes}")
 
 if __name__ == "__main__":
     main()
