@@ -38,7 +38,7 @@ def main():
     print("{:<30}\t{:<30}\t{:<30}".format("Tickers", "Years", "Percent Changes"))
     for group_key, ticker_years in group_changes.items():
         if len(ticker_years) >= 2:
-            tickers = ", ".join(ticker_years.keys()).replace(" ", "")
+            tickers = ", ".join(str(ticker) for ticker in ticker_years.keys()).replace(" ","")
             years = ", ".join(str(year) for year in list(ticker_years.values())[0])
             percent_changes = "%, ".join(str(change) for change in group_key)
             print("{:<30}\t{:<30}\t{:<30}".format(tickers, years, percent_changes+'%'))
