@@ -87,6 +87,5 @@ formatted_output_sorted = formatted_output.sortBy(lambda x: (x[0]))
 # Save the sorted output
 formatted_output_sorted.coalesce(1).saveAsTextFile(output_filepath)
 
-
 # Stop Spark session
 spark.stop()
