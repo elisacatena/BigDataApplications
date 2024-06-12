@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+"""spark application"""
+
 from datetime import datetime
 import argparse
 from pyspark.sql import SparkSession
@@ -78,8 +81,11 @@ unique_groups = grouped_output.filter(lambda x: len(x[1]) > 1)
 # Format the output
 formatted_output = unique_groups.map(lambda x: (', '.join(sorted([item[0] for item in x[1]])), ' '.join(map(str, x[0][0])), ' '.join(map(str, x[0][1]))))
 
-# Save the output
-formatted_output.coalesce(1).saveAsTextFile(output_filepath)
+# Format the output and sort alphabetically
+formatted_output_sorted = formatted_output.sortBy(lambda x: (x[0]))
+
+# Save the sorted output
+formatted_output_sorted.coalesce(1).saveAsTextFile(output_filepath)
 
 
 # Stop Spark session
