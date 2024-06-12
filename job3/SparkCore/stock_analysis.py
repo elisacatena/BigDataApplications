@@ -69,8 +69,18 @@ combined_key_output = formatted_output.map(lambda x: ((tuple(x[1]), tuple(x[2]))
 # Filter out unique rows based on the combined key
 filtered_output = combined_key_output.groupByKey().filter(lambda x: len(x[1]) > 1).flatMap(lambda x: x[1])
 
+# Group by years and variations
+grouped_output = filtered_output.map(lambda x: ((tuple(x[1]), tuple(x[2])), (x[0], x[1], x[2]))).groupByKey()
+
+# Filter out unique groups
+unique_groups = grouped_output.filter(lambda x: len(x[1]) > 1)
+
+# Format the output
+formatted_output = unique_groups.map(lambda x: (', '.join(sorted([item[0] for item in x[1]])), ' '.join(map(str, x[0][0])), ' '.join(map(str, x[0][1]))))
+
 # Save the output
-filtered_output.coalesce(1).saveAsTextFile(output_filepath)
+formatted_output.coalesce(1).saveAsTextFile(output_filepath)
+
 
 # Stop Spark session
 spark.stop()
