@@ -3,7 +3,7 @@
 
 import argparse
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, year, first, last, round, concat_ws, collect_list, count
+from pyspark.sql.functions import col, year, first, last, round, concat_ws, collect_list, count, split
 from pyspark.sql import Window
 
 # Creazione del parser e impostazione degli argomenti
@@ -60,8 +60,16 @@ duplicates = grouped_data.groupBy("Years", "Percent Changes") \
 
 # Unione dei duplicati con i dati originali per mantenere solo i ticker con variazioni duplicate
 final_result = grouped_data.join(duplicates, on=["Years", "Percent Changes"]) \
-                           .select("Ticker", "Years", "Percent Changes") \
-                           .orderBy("Ticker", "Years")
+                           .groupBy("Years", "Percent Changes") \
+                           .agg(concat_ws(",", collect_list("Ticker")).alias("Tickers")) \
+                           .select("Tickers", "Years", "Percent Changes")
+
+# Estrazione del primo ticker per ordinare
+final_result = final_result.withColumn("First_Ticker", split(col("Tickers"), ",")[0])
+
+# Ordinamento del risultato finale per ticker e anno
+final_result = final_result.orderBy("First_Ticker", "Years") \
+                           .select("Tickers", "Years", "Percent Changes")
 
 # Salvataggio del risultato su HDFS come file CSV
 final_result.coalesce(1).write.csv(output_path, header=True, mode="overwrite")
