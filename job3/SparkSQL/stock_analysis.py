@@ -42,17 +42,17 @@ statistics = df.withColumn("first_close", first("close").over(window)) \
 statistics = statistics.withColumnRenamed("ticker", "Ticker") \
     .withColumnRenamed("year", "Year")
 
-# Calcolo della finestra mobile di 3 anni
-window_spec = Window.partitionBy("Ticker").orderBy("Year").rowsBetween(0, 2)
+# Calcolo della finestra di 3 anni
+window = Window.partitionBy("Ticker").orderBy("Year").rowsBetween(0, 2)
 
 # Creazione delle colonne per gli anni e le variazioni percentuali raggruppati
-grouped_data = statistics.withColumn("Years_Group", collect_list("Year").over(window_spec)) \
-                         .withColumn("Percent_Changes_Group", collect_list("Percent Change").over(window_spec)) \
+grouped_data = statistics.withColumn("Years_Group", collect_list("Year").over(window)) \
+                         .withColumn("Percent_Changes_Group", collect_list("Percent Change").over(window)) \
                          .filter(col("Years_Group").getItem(2).isNotNull()) \
                          .withColumn("Years", concat_ws(", ", col("Years_Group"))) \
                          .withColumn("Percent Changes", concat_ws(", ", col("Percent_Changes_Group")))
 
-# Raggruppamento per variazioni percentuali per trovare gruppi duplicati
+# Raggruppa per variazioni percentuali per trovare gruppi duplicati
 duplicates = grouped_data.groupBy("Years", "Percent Changes") \
                          .agg(count("Ticker").alias("Ticker Count")) \
                          .filter(col("Ticker Count") > 1) \
@@ -67,7 +67,7 @@ final_result = grouped_data.join(duplicates, on=["Years", "Percent Changes"]) \
 # Estrazione del primo ticker per ordinare
 final_result = final_result.withColumn("First_Ticker", split(col("Tickers"), ",")[0])
 
-# Ordinamento del risultato finale per ticker e anno
+# Ordina il risultato finale per ticker e anno
 final_result = final_result.orderBy("First_Ticker", "Years") \
                            .select("Tickers", "Years", "Percent Changes")
 
