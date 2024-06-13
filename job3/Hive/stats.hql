@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS stocks;
 DROP TABLE IF EXISTS intermediate_stock_prices;
 DROP TABLE IF EXISTS report_finale_job3;
 DROP TABLE IF EXISTS report_finale_triennali;
-SET mapreduce.job.reduces=2;
+DROP TABLE IF EXISTS filtered_report;
 
 -- Create the table for merged data
 CREATE TABLE IF NOT EXISTS merged_data (
@@ -82,6 +82,32 @@ JOIN
 ORDER BY
     t1.ticker, t1.anno;
 
+-- Create a table to filter report_finale_triennali to keep only rows with duplicate anni and variazioni
+CREATE TABLE IF NOT EXISTS duplicate_anni_variazioni AS
+SELECT 
+    anni, 
+    variazioni 
+FROM 
+    report_finale_triennali
+GROUP BY 
+    anni, 
+    variazioni 
+HAVING 
+    COUNT(*) > 1;
+
+CREATE TABLE IF NOT EXISTS filtered_report AS
+SELECT 
+    rft.ticker, 
+    rft.anni, 
+    rft.variazioni
+FROM 
+    report_finale_triennali rft
+JOIN
+    duplicate_anni_variazioni dav 
+    ON rft.anni = dav.anni AND rft.variazioni = dav.variazioni
+ORDER BY
+    rft.ticker, rft.anni;
+
 INSERT OVERWRITE LOCAL DIRECTORY '/Users/elisacatena/Desktop/out'
 ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
 WITH SERDEPROPERTIES (
@@ -89,7 +115,7 @@ WITH SERDEPROPERTIES (
    "quoteChar"     = "\""
 )
 STORED AS TEXTFILE
-SELECT ticker, anni, variazioni FROM report_finale_triennali;
+SELECT ticker, anni, variazioni FROM filtered_report;
 
 -- Drop intermediate tables to clean up
 DROP TABLE IF EXISTS merged_data;
@@ -97,3 +123,5 @@ DROP TABLE IF EXISTS stocks;
 DROP TABLE IF EXISTS intermediate_stock_prices;
 DROP TABLE IF EXISTS report_finale_job3;
 DROP TABLE IF EXISTS report_finale_triennali;
+DROP TABLE IF EXISTS duplicate_anni_variazioni;
+DROP TABLE IF EXISTS filtered_report;
