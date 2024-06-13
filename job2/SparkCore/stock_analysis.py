@@ -27,10 +27,8 @@ def sort_and_calculate_stats(values):
     first_close = close_prices[0]
     last_close = close_prices[-1]
     total_volume = sum(volumes)
-
-    percentual_variation = ((last_close - first_close) / first_close) * 100
-
-    return (total_volume, first_close, last_close, percentual_variation)
+    percent_change = ((last_close - first_close) / first_close) * 100
+    return (total_volume, first_close, last_close, percent_change)
 
 def calculate_overall_stats(key, values):
     sector, industry, year = key
@@ -50,7 +48,7 @@ def calculate_overall_stats(key, values):
 
     for ticker, ticker_values in tickers.items():
         sorted_stats = sort_and_calculate_stats(ticker_values)
-        total_volume, first_close, last_close, percentual_variation = sorted_stats
+        total_volume, first_close, last_close, percent_change = sorted_stats
 
         industry_first_close_sum += first_close
         industry_last_close_sum += last_close
@@ -59,12 +57,12 @@ def calculate_overall_stats(key, values):
             max_volume = total_volume
             max_ticker_volume = ticker
 
-        if percentual_variation > max_increase:
-            max_increase = percentual_variation
+        if percent_change > max_increase:
+            max_increase = percent_change
             max_ticker_increase = ticker
 
-    industry_price_change = ((industry_last_close_sum - industry_first_close_sum) / industry_first_close_sum) * 100
-    return (sector, year, industry, round(industry_price_change, 2), max_ticker_increase, round(max_increase, 2), max_ticker_volume, max_volume)
+    industry_percent_change = ((industry_last_close_sum - industry_first_close_sum) / industry_first_close_sum) * 100
+    return (sector, year, industry, round(industry_percent_change, 2), max_ticker_increase, round(max_increase, 2), max_ticker_volume, max_volume)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_path", type=str, help="Input dataset path")
@@ -90,8 +88,8 @@ results = grouped_data.map(lambda x: calculate_overall_stats(x[0], x[1]))
 output = results.sortBy(lambda x: (x[0], -x[3]))
 
 def format_output(row):
-    sector, year, industry, industry_price_change, max_ticker_increase, max_increase, max_ticker_volume, max_volume = row
-    return f'"{sector}",{year},"{industry}",{industry_price_change},{max_ticker_increase} ({max_increase}),{max_ticker_volume} ({max_volume})'
+    sector, year, industry, industry_percent_change, max_ticker_increase, max_increase, max_ticker_volume, max_volume = row
+    return f'"{sector}",{year},"{industry}",{industry_percent_change},{max_ticker_increase} ({max_increase}),{max_ticker_volume} ({max_volume})'
 
 formatted_output = output.map(format_output)
 
