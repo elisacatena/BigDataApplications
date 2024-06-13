@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS percent_changes;
 DROP TABLE IF EXISTS three_years_groups;
 DROP TABLE IF EXISTS duplicate_anni_variazioni;
 DROP TABLE IF EXISTS filtered_report;
+SET mapreduce.job.reduces=2;
 
 -- Create the table for merged data
 CREATE TABLE IF NOT EXISTS merged_data (
@@ -31,7 +32,7 @@ STORED AS TEXTFILE
 tblproperties("skip.header.line.count"="1");
 
 -- Load merged data from hdfs
-LOAD DATA LOCAL INPATH '/Users/elisacatena/git/BigDataApplications/input/merged_data_2.csv' OVERWRITE INTO TABLE merged_data;
+LOAD DATA LOCAL INPATH '/Users/elisacatena/git/BigDataApplications/input/merged_data.csv' OVERWRITE INTO TABLE merged_data;
 
 CREATE TABLE IF NOT EXISTS stocks AS 
 SELECT 
