@@ -66,26 +66,20 @@ sliding_windows = ticker_year_variation.flatMapValues(lambda x: generate_sliding
 # Format output for saving
 formatted_output = sliding_windows.map(lambda x: (x[0], x[1][0], x[1][1]))
 
-# Create a combined key of years and variations for duplicate detection
-combined_key_output = formatted_output.map(lambda x: ((tuple(x[1]), tuple(x[2])), (x[0], x[1], x[2])))
-
-# Filter out unique rows based on the combined key
-filtered_output = combined_key_output.groupByKey().filter(lambda x: len(x[1]) > 1).flatMap(lambda x: x[1])
-
 # Group by years and variations
-grouped_output = filtered_output.map(lambda x: ((tuple(x[1]), tuple(x[2])), (x[0], x[1], x[2]))).groupByKey()
+grouped_output = formatted_output.map(lambda x: ((tuple(x[1]), tuple(x[2])), (x[0], x[1], x[2]))).groupByKey()
 
 # Filter out unique groups
 unique_groups = grouped_output.filter(lambda x: len(x[1]) > 1)
 
 # Format the output
-formatted_output = unique_groups.map(lambda x: (', '.join(sorted([item[0] for item in x[1]])), ' '.join(map(str, x[0][0])), ' '.join(map(str, x[0][1]))))
+fila_output = unique_groups.map(lambda x: (', '.join(sorted([item[0] for item in x[1]])), ' '.join(map(str, x[0][0])), ' '.join(map(str, x[0][1]))))
 
 # Format the output and sort alphabetically
-formatted_output_sorted = formatted_output.sortBy(lambda x: (x[0]))
+final_output_sorted = fila_output.sortBy(lambda x: (x[0], x[1]))
 
 # Save the sorted output
-formatted_output_sorted.coalesce(1).saveAsTextFile(output_filepath)
+final_output_sorted.coalesce(1).saveAsTextFile(output_filepath)
 
 # Stop Spark session
 spark.stop()
