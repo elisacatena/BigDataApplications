@@ -33,9 +33,7 @@ window = Window.partitionBy("ticker", "year").orderBy("date")
 statistics = df.withColumn("first_close", first("close").over(window)) \
     .withColumn("last_close", last("close").over(window)) \
     .groupBy("ticker", "year") \
-    .agg(
-        round(((last("close") - first("close")) / first("close") * 100), 2).alias("Percent Change"),
-    ) \
+    .agg(round(((last("close") - first("close")) / first("close") * 100), 2).alias("Percent Change")) \
     .orderBy("ticker", "year")
 
 # Rinomina le colonne con lettere maiuscole
