@@ -33,8 +33,7 @@ grouped_data = data.groupBy("sector", "industry", "year", "ticker") \
                       collect_list("close").alias("close_prices"),
                       spark_sum("volume").alias("total_volume"),
                       first("close").alias("first_close"),
-                      last("close").alias("last_close")
-                  )
+                      last("close").alias("last_close"))
 
 # Calcola le statistiche
 grouped_data = grouped_data.withColumn("percent_increase", (col("last_close") - col("first_close")) / col("first_close") * 100)
@@ -45,8 +44,7 @@ final_data = grouped_data.groupBy("sector", "industry", "year") \
                              spark_sum("first_close").alias("industry_first_close_sum"),
                              spark_sum("last_close").alias("industry_last_close_sum"),
                              spark_max("percent_increase").alias("max_percent_increase"),
-                             spark_max("total_volume").alias("max_total_volume")
-                         )
+                             spark_max("total_volume").alias("max_total_volume"))
 
 # Calcola la variazione percentuale della quotazione dell'industria
 final_data = final_data.withColumn("Industry price change %", round(((col("industry_last_close_sum") - col("industry_first_close_sum")) / col("industry_first_close_sum") * 100), 2))
