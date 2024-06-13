@@ -36,9 +36,7 @@ statistics = data.withColumn("first_close", first("close").over(window)) \
         round(((last("close") - first("close")) / first("close") * 100), 2).alias("Percent Change"),
         round(min("low"), 2).alias("Min Price"),
         round(max("high"), 2).alias("Max Price"),
-        round(avg("volume"), 2).alias("Avg Volume")
-    ) \
-    .orderBy("ticker", "year")
+        round(avg("volume"), 2).alias("Avg Volume")).orderBy("ticker", "year")
 
 # Rinomina le colonne con lettere maiuscole
 statistics = statistics.withColumnRenamed("ticker", "Ticker")
