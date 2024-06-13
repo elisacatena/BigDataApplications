@@ -3,7 +3,7 @@
 
 import argparse
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, year, first, last, round, concat_ws, collect_list, lit
+from pyspark.sql.functions import col, year, first, last, round, concat_ws, collect_list, count
 from pyspark.sql import Window
 
 # Creazione del parser e impostazione degli argomenti
@@ -52,8 +52,15 @@ grouped_data = statistics.withColumn("Years_Group", collect_list("Year").over(wi
                          .withColumn("Years", concat_ws(", ", col("Years_Group"))) \
                          .withColumn("Percent Changes", concat_ws(", ", col("Percent_Changes_Group")))
 
-# Selezione e ordine delle colonne finali
-final_result = grouped_data.select("Ticker", "Years", "Percent Changes") \
+# Raggruppamento per variazioni percentuali per trovare gruppi duplicati
+duplicates = grouped_data.groupBy("Years", "Percent Changes") \
+                         .agg(count("Ticker").alias("Ticker Count")) \
+                         .filter(col("Ticker Count") > 1) \
+                         .select("Years", "Percent Changes")
+
+# Unione dei duplicati con i dati originali per mantenere solo i ticker con variazioni duplicate
+final_result = grouped_data.join(duplicates, on=["Years", "Percent Changes"]) \
+                           .select("Ticker", "Years", "Percent Changes") \
                            .orderBy("Ticker", "Years")
 
 # Salvataggio del risultato su HDFS come file CSV
