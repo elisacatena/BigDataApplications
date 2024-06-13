@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS stocks;
 DROP TABLE IF EXISTS intermediate_stock_prices;
 DROP TABLE IF EXISTS report_finale_job3;
 DROP TABLE IF EXISTS report_finale_triennali;
+DROP TABLE IF EXISTS duplicate_anni_variazioni;
 DROP TABLE IF EXISTS filtered_report;
 
 -- Create the table for merged data
@@ -108,6 +109,20 @@ JOIN
 ORDER BY
     rft.ticker, rft.anni;
 
+-- Create a table to group the tickers with the same anni and variazioni
+CREATE TABLE IF NOT EXISTS grouped_tickers AS
+SELECT 
+    CONCAT_WS(',', COLLECT_LIST(ticker)) AS tickers, 
+    anni, 
+    variazioni
+FROM 
+    filtered_report
+GROUP BY 
+    anni, 
+    variazioni
+ORDER BY 
+    anni;
+
 INSERT OVERWRITE LOCAL DIRECTORY '/Users/elisacatena/Desktop/out'
 ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
 WITH SERDEPROPERTIES (
@@ -115,7 +130,9 @@ WITH SERDEPROPERTIES (
    "quoteChar"     = "\""
 )
 STORED AS TEXTFILE
-SELECT ticker, anni, variazioni FROM filtered_report;
+SELECT tickers, anni, variazioni 
+FROM grouped_tickers
+ORDER BY tickers,anni;
 
 -- Drop intermediate tables to clean up
 DROP TABLE IF EXISTS merged_data;
@@ -125,3 +142,4 @@ DROP TABLE IF EXISTS report_finale_job3;
 DROP TABLE IF EXISTS report_finale_triennali;
 DROP TABLE IF EXISTS duplicate_anni_variazioni;
 DROP TABLE IF EXISTS filtered_report;
+DROP TABLE IF EXISTS grouped_tickers;
