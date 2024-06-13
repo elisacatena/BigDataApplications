@@ -2,8 +2,8 @@
 
 Questo progetto si concentra sull'analisi dei dati storici giornalieri dei prezzi delle azioni dalla Borsa di New York (NYSE) e dal NASDAQ, che spaziano dal 1970 al 2018. Il dataset è composto da due file CSV:
 
-1. `historical_stock_prices.csv`: Contiene informazioni giornaliere sui prezzi delle azioni, inclusi i prezzi di apertura, chiusura, minimi, massimi, il volume e la data.
-2. `historical_stocks.csv`: Contiene dettagli su ciascuna azione, inclusi il simbolo, la borsa, il nome dell'azienda, il settore e l'industria.
+1. `historical_stock_prices.csv`: contiene informazioni giornaliere sui prezzi delle azioni, inclusi i prezzi di apertura, chiusura, minimi, massimi, il volume e la data.
+2. `historical_stocks.csv`: contiene dettagli su ciascuna azione, inclusi il simbolo, la borsa, il nome dell'azienda, il settore e l'industria.
 
 ## Preparazione dei Dati
 - Pulizia dei dati mediante rimozione di voci errate o non pertinenti.
