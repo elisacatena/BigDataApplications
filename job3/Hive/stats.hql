@@ -30,11 +30,12 @@ STORED AS TEXTFILE
 tblproperties("skip.header.line.count"="1");
 
 -- Load merged data from hdfs
-LOAD DATA INPATH 'hdfs:///user/hive/warehouse/input/merged_data.csv' OVERWRITE INTO TABLE merged_data;
+LOAD DATA LOCAL INPATH '/Users/elisacatena/git/BigDataApplications/input/merged_data.csv' OVERWRITE INTO TABLE merged_data;
 
 CREATE TABLE IF NOT EXISTS stocks AS 
 SELECT 
     ticker,
+    name,
     close,
     data,
     YEAR(data) AS anno
@@ -48,6 +49,7 @@ CREATE TABLE IF NOT EXISTS intermediate_stock_prices AS
         ticker,
         data,
         anno,
+        close,
         FIRST_VALUE(close) OVER (PARTITION BY ticker, anno ORDER BY data ASC) AS first_close,
         LAST_VALUE(close) OVER (PARTITION BY ticker, anno ORDER BY data ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_close
     FROM 
@@ -66,21 +68,21 @@ CREATE TABLE IF NOT EXISTS report_finale_job3 AS
         ticker, anno;
         
 CREATE TABLE IF NOT EXISTS report_finale_triennali AS 
-    SELECT
-        t1.ticker,
-        t1.anno,
-        CONCAT(t1.anno, ',', t2.anno, ',', t3.anno) AS anni,
-        CONCAT(t1.price_change_percent, ',', t2.price_change_percent, ',', t3.price_change_percent) AS variazioni
-    FROM
-        report_finale_job3 t1
-    JOIN
-        report_finale_job3 t2 ON t1.ticker = t2.ticker AND t2.anno = t1.anno + 1
-    JOIN
-        report_finale_job3 t3 ON t1.ticker = t3.ticker AND t3.anno = t1.anno + 2
-    ORDER BY
-        t1.ticker, t1.anno;
+SELECT
+    t1.ticker,
+    t1.anno,
+    CONCAT(t1.anno, ',', t2.anno, ',', t3.anno) AS anni,
+    CONCAT(t1.price_change_percent, ',', t2.price_change_percent, ',', t3.price_change_percent) AS variazioni
+FROM
+    report_finale_job3 t1
+JOIN
+    report_finale_job3 t2 ON t1.ticker = t2.ticker AND t2.anno = t1.anno + 1
+JOIN
+    report_finale_job3 t3 ON t1.ticker = t3.ticker AND t3.anno = t1.anno + 2
+ORDER BY
+    t1.ticker, t1.anno;
 
-INSERT OVERWRITE DIRECTORY 'hdfs:///user/hive/warehouse/report_finale_triennali'
+INSERT OVERWRITE LOCAL DIRECTORY '/Users/elisacatena/Desktop/out'
 ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
 WITH SERDEPROPERTIES (
    "separatorChar" = ",",
