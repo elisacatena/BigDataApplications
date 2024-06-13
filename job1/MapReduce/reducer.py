@@ -13,6 +13,7 @@ def main():
     
     print("{:<10}\t{:<40}\t{:<4}\t{:<16}\t{:<16}\t{:<16}\t{:<16}".format("Ticker", "Name", "Year", "Percent Change", "Min Price", "Max Price", "Avg Volume"))
 
+    # Dizionario annidato per memorizzare tutti i dati
     all_data = defaultdict(lambda: defaultdict(lambda: {
         'name': "",
         'dates': [],
@@ -24,20 +25,20 @@ def main():
     }))
 
     for tokens in read_mapper_output(sys.stdin):
-        ticker, name, year, date, close_price, low_price, high_price, volume = tokens
+        ticker, name, year, date, close, low, high, volume = tokens
         year = int(year)
         date = datetime.strptime(date, "%Y-%m-%d")
-        close_price = float(close_price)
-        low_price = float(low_price)
-        high_price = float(high_price)
+        close = float(close)
+        low = float(low)
+        high = float(high)
         volume = int(volume)
         
         data = all_data[ticker][year]
         data['name'] = name
         data['dates'].append(date)
-        data['close_prices'][date] = close_price
-        data['min_price'] = min(data['min_price'], low_price)
-        data['max_price'] = max(data['max_price'], high_price)
+        data['close_prices'][date] = close
+        data['min_price'] = min(data['min_price'], low)
+        data['max_price'] = max(data['max_price'], high)
         data['total_volume'] += volume
         data['count'] += 1
 
