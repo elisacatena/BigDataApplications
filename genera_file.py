@@ -68,6 +68,7 @@ fattore_scala_2 = len(open(file_originale_2).readlines()) * 2 // 3
 aggiungi_nuove_righe(file_originale_2, fattore_scala_2)
 print("2")
 
+# Terzo nuovo file (dimensione pari al doppio rispetto al file originale)
 fattore_scala_3 = len(open(file_originale_3).readlines())
 aggiungi_nuove_righe(file_originale_3, fattore_scala_3)
 print("3")
